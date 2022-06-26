@@ -1,11 +1,33 @@
 const router = require('express').Router();
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+// get config vars
+dotenv.config();
+process.env.TOKEN_SECRET;
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+  
+    if (token == null) return res.sendStatus(401)
+  
+    jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+      console.log(err)
+  
+      if (err) return res.sendStatus(403)
+  
+      req.user = user
+  
+      next()
+    })
+  }
 const plcController = require('../controllers/plc')
 
-router.get('/', plcController.getAllPlcs)
-router.get('/user/:id', plcController.getPlcByUserId)
-router.get('/:id', plcController.getPlcById)
-router.post('/', plcController.addPlc);
-router.delete('/:id', plcController.deletePlcById);
-router.put('/update/:id', plcController.updatePlc);
+router.get('/',authenticateToken, plcController.getAllPlcs)
+router.get('/user/:id',authenticateToken, plcController.getPlcByUserId)
+router.get('/:id',authenticateToken, plcController.getPlcById)
+router.post('/',authenticateToken, plcController.addPlc);
+router.delete('/:id',authenticateToken, plcController.deletePlcById);
+router.put('/update/:id',authenticateToken, plcController.updatePlc);
 
 module.exports = router

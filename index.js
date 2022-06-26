@@ -7,6 +7,13 @@ const channelGroupRoute = require('./routes/ChannelGroup')
 const plcRoute = require('./routes/plc')
 const channelRoute = require('./routes/channel')
 const { scheduleAlerts } = require('./cron-ping')
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+// get config vars
+dotenv.config();
+
+// access config var
 
 const app = express()
 scheduleAlerts()

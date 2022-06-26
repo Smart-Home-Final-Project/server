@@ -1,4 +1,29 @@
 const { User } = require('../models/user');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+// get config vars
+dotenv.config();
+process.env.TOKEN_SECRET;
+function generateAccessToken(username) {
+    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+  }
+
+
+
+const getUserByToken = async (req, res) => {
+
+    const user = await User.findOne({ userName: req.body.userName, password: req.body.password });
+    if (!user)
+        return res.status(400).send({ message: "Invalid login information" });
+    else
+        {   
+            const token = generateAccessToken({ username: req.body.username });
+            return res.status(200).send({user,token});
+    
+    }
+}
+
 
 //post
 const login = async (req, res) => {
@@ -6,7 +31,11 @@ const login = async (req, res) => {
     if (!user)
         return res.status(400).send({ message: "Invalid login information" });
     else
-        return res.status(200).send(user);
+        {   
+            const token = generateAccessToken({ username: req.body.username });
+            return res.status(200).send({user,token});
+    
+    }
 }
 
 //post
