@@ -6,21 +6,22 @@ const dotenv = require('dotenv');
 dotenv.config();
 process.env.TOKEN_SECRET;
 function generateAccessToken(username) {
+    console.log("generateAccessToken",username, process.env.TOKEN_SECRET)
     return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
   }
 
 
 
 const getUserByToken = async (req, res) => {
-
-    const user = await User.findOne({ userName: req.body.userName, password: req.body.password });
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+    const tokenDecode = jwt.decode(token, process.env.TOKEN_SECRET);
+    const user = await User.findById(tokenDecode.userId);
     if (!user)
         return res.status(400).send({ message: "Invalid login information" });
     else
-        {   
-            const token = generateAccessToken({ username: req.body.username });
+        {  
             return res.status(200).send({user,token});
-    
     }
 }
 
@@ -32,7 +33,7 @@ const login = async (req, res) => {
         return res.status(400).send({ message: "Invalid login information" });
     else
         {   
-            const token = generateAccessToken({ username: req.body.username });
+            const token = generateAccessToken({ userId: user._id });
             return res.status(200).send({user,token});
     
     }
@@ -86,4 +87,4 @@ const deleteUserById = async (req, res) => {
     }
 }
 
-module.exports = { login, addUser, getAllUsers, getUserById,deleteUserById }
+module.exports = { login, addUser, getAllUsers, getUserById,deleteUserById,getUserByToken }

@@ -4,7 +4,6 @@ const getActiveAlerts = require('./controllers/actionAlert').getActiveAlerts;
 const scheduleAlerts = () => {
 
     cron.schedule('* * * * *', async () => {
-        console.log('schedule')
         console.log(new Date().getHours())
         let alerts = await getActiveAlerts();
         console.log(alerts)
