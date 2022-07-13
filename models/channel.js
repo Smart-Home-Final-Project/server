@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const channelSchema = new mongoose.Schema({
     plcId: { type: mongoose.Types.ObjectId, ref: "Plcs" },
     name: String,
-    category:Number,
+    category:String,
     status: Boolean,
     channelNum:Number
 

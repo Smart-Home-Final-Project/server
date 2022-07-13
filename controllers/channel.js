@@ -2,21 +2,11 @@ const { Channel } = require('../models/channel');
 const fetch = require('node-fetch');
 const { isObjectIdOrHexString } = require('mongoose');
 const mongoose = require("mongoose");
+const { switchToOffApi, switchToOnApi } = require('./swichApi');
 
 
 //post
-const addChannel = async (req, res) => {
-    let newChannel = new Channel(req.body);
-    console.log(newChannel)
-    try {
-        await newChannel.save();
-        return res.send(newChannel);
-    }
-    catch {
-        return res.status(400).send(err);
-    }
 
-}
 //delete
 const deleteChannelById = async (req, res) => {
     let channelId = req.query.id;
@@ -51,52 +41,25 @@ const getChannelById = async (req, res) => {
         return res.status(400).send(err);
     }
 }
+
 //get
 const switchToOn = async (req, res) => {
-    //console.log(req)
     let { channel, login, token } = req.query;
-    console.log(channel + " " + token)
-    console.log("channeltoken")
-    try {
-        let resu;
-        var requestOptions = {
-            method: 'GET',
-            redirect: 'follow'
-        };
-
-        const r = await fetch(`http://d.zeitech.co.il/dz.cgi?channel=${channel}&state=1&login=${login}&token=${token}`, requestOptions)
-            .then(response => response.json())
-            .then(result => resu = result)
-            .catch(error => console.log('error', error));
-        return res.send(resu)
-    }
-    catch (err) {
-        return res.status(400).send(err);
-    }
+    const response =await switchToOnApi(channel, login, token,res)
+    res.status(response.status).send(response.response);
 }
+
+
 //get
+
 const switchToOff = async (req, res) => {
     let { channel, login, token } = req.query;
-    console.log(channel + " " + token)
-    console.log("ghjkl;'")
-    try {
-        let resu;
-        var requestOptions = {
-            method: 'GET',
-            redirect: 'follow'
-        };
-
-        let r
-        await fetch(`http://d.zeitech.co.il/dz.cgi?channel=${channel}&state=0&login=${login}&token=${token}`, requestOptions)
-            .then(response => response.json())
-            .then(result => r = result)
-            .catch(error => console.log('error', error));
-        return res.send(r)
-    }
-    catch (err) {
-        return res.status(400).send(err);
-    }
+    const response = await switchToOffApi(channel, login, token,res);
+    res.status(response.status).send(response.response);
 }
+
+
+
 
 //put
 const updateChannelById = async (req, res) => {
@@ -121,6 +84,34 @@ const updateChannel = async (req, res) => {
         const channelsToUpdates = channels.map(channel=>({updateOne:{"filter" : { "_id" : channel._id },"update" :channel }}));
         channelUpdate = await Channel.bulkWrite(channelsToUpdates);
         const ids = channels.map(channel=>mongoose.Types.ObjectId(channel._id));
+        channelUpdate = await Channel.find({'_id': { $in: ids}})
+        return res.send(channelUpdate)
+    }
+    catch (error) {
+        return res.status(400).send(error)
+    }
+}
+
+// const addChannel = async (req, res) => {
+//     let newChannel = new Channel(req.body);
+//     console.log(newChannel)
+//     try {
+//         await newChannel.save();
+//         return res.send(newChannel);
+//     }
+//     catch {
+//         return res.status(400).send(err);
+//     }
+
+// }
+
+const addChannel = async (req, res) => {
+    const channels = req.body;
+    try {
+        const channelsToUpdates = channels.map(channel=>({insertOne :{"document" :channel }}));
+        channelUpdate = await Channel.bulkWrite(channelsToUpdates);
+        const ids = Object.values(channelUpdate?.insertedIds).map(item=>mongoose.Types.ObjectId(item._id));
+        // const ids = channels.map(channel=>mongoose.Types.ObjectId(channel._id));
         channelUpdate = await Channel.find({'_id': { $in: ids}})
         return res.send(channelUpdate)
     }

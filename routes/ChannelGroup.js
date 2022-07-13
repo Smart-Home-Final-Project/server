@@ -6,7 +6,7 @@ channelGroupRoute.get('/:id',channelGroup.getChannelsGroupById)
 channelGroupRoute.delete('/:id',channelGroup.deleteChannelsGroupById)
 channelGroupRoute.post('',channelGroup.addChannelsGroup)
 channelGroupRoute.put('/update/:id',channelGroup.updateChannelGroup)
-//channelGroupRoute.post('/swichToOn/:id',channelGroup.swichGroupToOn)
-//channelGroupRoute.post('/swichToOff/:id',channelGroup.swichGroupToOff)
+channelGroupRoute.post('/swichToOn',channelGroup.switchToOnGroup)
+channelGroupRoute.post('/swichToOff',channelGroup.switchToOffGroup)
 
 module.exports = channelGroupRoute;

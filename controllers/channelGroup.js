@@ -1,5 +1,6 @@
 const ChannelGroup = require("../models/channelGroup").Channelgroup;
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const { switchToOnApi, switchToOffApi } = require("./swichApi");
 
 //Get all Channels groups
 const getAllChanneslGroupsById = async (req, res) => {
@@ -66,6 +67,34 @@ const deleteChannelsGroupById = async (req, res) => {
 }
 
 
+const switchToOnGroup = async (req, res) => {
+    const channels =  req.body;
+    let response = {};
+    channels.forEach(async (item,index) => {
+        let { channel, login, token } = item;
+        response = await switchToOnApi(channel, login, token);
+        if(index===channels.length-1){
+            res.status(response.status).send(response.response);
+        }
+    });
+    // res.status(response.status).send(response.response);
+}
+
+//get
+
+const switchToOffGroup = async (req, res) => {
+    const channels =  req.body;
+    let response = {};
+    channels.forEach(async (item,index) => {
+        let { channel, login, token } =item;
+        response = await switchToOffApi(channel, login, token);
+        if(index===channels.length-1){
+            res.status(response.status).send(response.response);
+        }
+    });
+    // res.status(response.status).send(response.response);
+}
+
 //אין לנו עדין קבוצות בשרת של צייטק, נוסיף פונקציות אלו בהמשך
 //Swich Channels group to on
 // const swichGroupToOn = async (req, res) => {
@@ -94,7 +123,7 @@ module.exports = {
     getChannelsGroupById,
     addChannelsGroup,
     deleteChannelsGroupById,
-    updateChannelGroup
-    // swichGroupToOn,
-    // swichGroupToOff
+    updateChannelGroup,
+    switchToOnGroup,
+    switchToOffGroup
 }
