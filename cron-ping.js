@@ -1,40 +1,53 @@
 const cron = require('node-cron');
 const getActiveAlerts = require('./controllers/actionAlert').getActiveAlerts;
+const { Channel } = require('./models/channel');
+const Plc = require("./models/plc").Plc;
+const mongoose = require('mongoose');
+const fetch = require('node-fetch');
 
 const scheduleAlerts = () => {
 
     cron.schedule('* * * * *', async () => {
-        console.log(new Date().getHours())
+        let currentTime = new Date()
+        console.log(currentTime.getHours())
         let alerts = await getActiveAlerts();
         console.log(alerts)
-        const turnOnAlerts = alerts.filter(
-            a => a.timeStart.getHours() == new Date().getHours() && a.timeStart.getMinutes() == new Date().getMinutes()
+
+        let turnOnAlerts = alerts.filter(
+            a => a.timeStart.getHours() == currentTime.getHours() //&& a.timeStart.getMinutes() == turnOnAlerts.getMinutes()
         );
-        console.log(turnOnAlerts);
-        
+
         let turnOffAlerts = alerts.filter(
             a =>
                 a.timeEnd.getHours() == new Date().getHours()
                 &&
                 a.timeEnd.getMinutes() == new Date().getMinutes()
         )
-        console.log(turnOffAlerts);
 
-        turnOnAlerts.forEach(a => {
+        console.log("turn onnnn", turnOnAlerts)
+        alerts.forEach(a => {
+            console.log('for each')
+             //if (a.frequency == 'daily')
+                 console.log(a.frequency)
+            //     fetchSwitchOn(a);
+            fetchSwitchOn(a);
+
             switch (a.frequency) {
                 case 'once':
                     fetchSwitchOn(a);
                     break;
                 case 'daily':
+                    console.log(a.frequency)
                     fetchSwitchOn(a);
                     break;
                 case 'by days':
-                    if (a.days.findIndex(new Date().getDay()) != -1)
+                    //if (a.days.findIndex(new Date().getDay()) != -1)
                         fetchSwitchOn(a);
                     break;
 
             }
         })
+
 
         turnOffAlerts.forEach(a => {
             switch (a.frequency) {
@@ -53,8 +66,7 @@ const scheduleAlerts = () => {
 
             }
         })
-
-    });
+    })
 }
 
 const updateAlert = (alert) => {
@@ -70,34 +82,56 @@ const updateAlert = (alert) => {
         redirect: 'follow'
     };
 
-    fetch("localhost:4500/actionAlert/update", requestOptions)
+    fetch(`http://localhost:4500/actionAlert/update${alert._id}`, requestOptions)
         .then(response => response.text())
         .then(result => console.log(result))
         .catch(error => console.log('error', error));
 }
 
-const fetchSwitchOn = (alert) => {
+
+const fetchSwitchOn = async (alert) => {
+    console.log('switch on!!!!!!!!!!!!!!!!!!!!', alert)
+    var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+    };
+    let channel;
+    let plcs;
+    let plc
+    if (alert.idChannel) {
+        console.log("alert", alert.idChannel.toString())
+
+        channel = await Channel.findById(alert.idChannel.toString())
+        plcs = await Plc.find({ userId: mongoose.Types.ObjectId('62d6bd907546aad8a5a93048') })//alert.userId
+        plc = plcs[0]
+        console.log('plccccc',plc)
+        let resu;
+        await fetch(`http://d.zeitech.co.il/dz.cgi?channel=${7}&state=1&login=${plc.login}&token=${plc.token}`, requestOptions)
+            .then(response => response.json())
+            .then(result => resu = result)
+            .catch(error => console.log('error', error));
+    }
+
+}
+
+
+const fetchSwitchOff = async (alert) => {
+    console.log('switch off!!!!!!!!!!!!!!!!!!!!')
     var requestOptions = {
         method: 'POST',
         redirect: 'follow'
     };
+    let channel;
+    let plc;
+    if (alert.channelId) {
 
-    fetch(`localhost:4500/channel/switchToOn/${alert._id}`, requestOptions)
-        .then(response => response.text())
-        .then(result => console.log(result))
-        .catch(error => console.log('error', error));
+        channel = await fetchChannel(alert.channelId)
+        plc = await fetchPlc(alert.userId)
+        await fetch(`http://localhost:4500/channel/switchToOff?channel=${channel.channelNum}&login=${plc.login}&token=${plc.token}`, requestOptions)
+            .then(response => response.json())
+            .then(result => console.log(result))
+            .catch(error => console.log('error', error));
+    }
+
 }
-
-const fetchSwitchOff = (alert) => {
-    var requestOptions = {
-        method: 'POST',
-        redirect: 'follow'
-    };
-
-    fetch(`localhost:4500/channel/switchToOff/${alert._id}`, requestOptions)
-        .then(response => response.text())
-        .then(result => console.log(result))
-        .catch(error => console.log('error', error));
-}
-
 module.exports = { scheduleAlerts }
