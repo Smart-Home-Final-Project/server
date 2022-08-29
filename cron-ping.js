@@ -11,7 +11,7 @@ const scheduleAlerts = () => {
         let currentTime = new Date()
         console.log(currentTime.getHours())
         let alerts = await getActiveAlerts();
-        console.log(alerts)
+        // console.log(alerts)
 
         let turnOnAlerts = alerts.filter(
             a => a.timeStart.getHours() == currentTime.getHours() //&& a.timeStart.getMinutes() == turnOnAlerts.getMinutes()
@@ -24,25 +24,24 @@ const scheduleAlerts = () => {
                 a.timeEnd.getMinutes() == new Date().getMinutes()
         )
 
-        console.log("turn onnnn", turnOnAlerts)
+        //console.log("turn onnnn", turnOnAlerts)
         alerts.forEach(a => {
-            console.log('for each')
-             //if (a.frequency == 'daily')
-                 console.log(a.frequency)
-            //     fetchSwitchOn(a);
-            fetchSwitchOn(a);
+            //  console.log('for each')
+            //if (a.frequency == 'daily')
+            //    console.log(a.frequency)
+            //fetchSwitchOn(a);
 
             switch (a.frequency) {
                 case 'once':
                     fetchSwitchOn(a);
                     break;
                 case 'daily':
-                    console.log(a.frequency)
+                    //console.log(a.frequency)
                     fetchSwitchOn(a);
                     break;
                 case 'by days':
                     //if (a.days.findIndex(new Date().getDay()) != -1)
-                        fetchSwitchOn(a);
+                    fetchSwitchOn(a);
                     break;
 
             }
@@ -90,28 +89,27 @@ const updateAlert = (alert) => {
 
 
 const fetchSwitchOn = async (alert) => {
-    console.log('switch on!!!!!!!!!!!!!!!!!!!!', alert)
+    //console.log('switch on!!!!!!!!!!!!!!!!!!!!', alert)
     var requestOptions = {
         method: 'GET',
         redirect: 'follow'
     };
-    let channel;
     let plcs;
     let plc
+    let resu;
     if (alert.idChannel) {
-        console.log("alert", alert.idChannel.toString())
+        //console.log("alert", alert.idChannel.toString())
 
         channel = await Channel.findById(alert.idChannel.toString())
         plcs = await Plc.find({ userId: mongoose.Types.ObjectId('62d6bd907546aad8a5a93048') })//alert.userId
         plc = plcs[0]
-        console.log('plccccc',plc)
-        let resu;
+         console.log('plccccc',plc)
         await fetch(`http://d.zeitech.co.il/dz.cgi?channel=${7}&state=1&login=${plc.login}&token=${plc.token}`, requestOptions)
             .then(response => response.json())
-            .then(result => resu = result)
+            .then(result => { resu = result; console.log("result: ", result) })
             .catch(error => console.log('error', error));
     }
-
+    return resu;
 }
 
 
