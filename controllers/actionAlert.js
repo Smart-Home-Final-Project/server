@@ -3,6 +3,7 @@ const mongoose=require('mongoose')
 
 const addActionAlert = async (req, res) => {
     let alert = new ActionAlert(req.body)
+    console.log("timr",alert.timeStart)
     try {
         await alert.save()
         return res.send(alert)
@@ -48,8 +49,7 @@ const getAllActionAlertsById = async (req, res) => {
 
 const getActiveAlerts = async (req, res) => {
     try {
-        let alerts = await ActionAlert.find({ status: true })
-        return alerts;
+       return ActionAlert.find({ status: true })
     }
     catch (error) {
         console.log(error)

@@ -4,33 +4,37 @@ const { Channel } = require('./models/channel');
 const Plc = require("./models/plc").Plc;
 const mongoose = require('mongoose');
 const fetch = require('node-fetch');
+const { turnOnrequest, turnOffrequest } = require('./controllers/swichApi');
 
 const scheduleAlerts = () => {
 
-    cron.schedule('* * * * *', async () => {
+    cron.schedule('* * * * *', async () => 
+    {
         let currentTime = new Date()
         console.log(currentTime.getHours())
         let alerts = await getActiveAlerts();
-        // console.log(alerts)
-
+        console.log(alerts.map(s=>s.timeStart));
         let turnOnAlerts = alerts.filter(
-            a => a.timeStart.getHours() == currentTime.getHours() //&& a.timeStart.getMinutes() == turnOnAlerts.getMinutes()
-        );
+            a => {console.log("filter",a.timeStart); 
+            return new Date(a.timeStart.toString()).getHours() === currentTime.getHours() 
+             && new Date(a.timeStart).getMinutes() === currentTime.getMinutes()
+            });
 
         let turnOffAlerts = alerts.filter(
             a =>
-                a.timeEnd.getHours() == new Date().getHours()
+                new Date(a.timeEnd).getHours() == new Date().getHours()
                 &&
-                a.timeEnd.getMinutes() == new Date().getMinutes()
+                new Date(a.timeEnd).getMinutes() == new Date().getMinutes()
         )
 
-        //console.log("turn onnnn", turnOnAlerts)
-        alerts.forEach(a => {
+        console.log("turn onnnn", turnOnAlerts)
+        console.log("turn off", turnOffAlerts)
+        turnOnAlerts.forEach(a => {
             //  console.log('for each')
             //if (a.frequency == 'daily')
             //    console.log(a.frequency)
             //fetchSwitchOn(a);
-
+            console.log("alert ",a)
             switch (a.frequency) {
                 case 'once':
                     fetchSwitchOn(a);
@@ -40,7 +44,7 @@ const scheduleAlerts = () => {
                     fetchSwitchOn(a);
                     break;
                 case 'by days':
-                    //if (a.days.findIndex(new Date().getDay()) != -1)
+                    if (a.days.findIndex(currentTime.getDay()) != -1)
                     fetchSwitchOn(a);
                     break;
 
@@ -49,6 +53,7 @@ const scheduleAlerts = () => {
 
 
         turnOffAlerts.forEach(a => {
+            console.log("off alert",a)
             switch (a.frequency) {
                 case 'once':
                     fetchSwitchOff(a);
@@ -103,11 +108,11 @@ const fetchSwitchOn = async (alert) => {
         channel = await Channel.findById(alert.idChannel.toString())
         plcs = await Plc.find({ userId: mongoose.Types.ObjectId('62d6bd907546aad8a5a93048') })//alert.userId
         plc = plcs[0]
-         console.log('plccccc',plc)
-        await fetch(`http://d.zeitech.co.il/dz.cgi?channel=${7}&state=1&login=${plc.login}&token=${plc.token}`, requestOptions)
-            .then(response => response.json())
-            .then(result => { resu = result; console.log("result: ", result) })
-            .catch(error => console.log('error', error));
+        let result = await turnOnrequest(channel.channelNum, plc.login, plc.token);
+        if(result===200){
+            channel.status=true;
+            await Channel.findByIdAndUpdate(alert.idChannel, channel)
+        }
     }
     return resu;
 }
@@ -121,14 +126,17 @@ const fetchSwitchOff = async (alert) => {
     };
     let channel;
     let plc;
+    console.log(alert);
     if (alert.channelId) {
 
         channel = await fetchChannel(alert.channelId)
         plc = await fetchPlc(alert.userId)
-        await fetch(`http://localhost:4500/channel/switchToOff?channel=${channel.channelNum}&login=${plc.login}&token=${plc.token}`, requestOptions)
-            .then(response => response.json())
-            .then(result => console.log(result))
-            .catch(error => console.log('error', error));
+        let result = await turnOffrequest(channel.channelNum, plc.login, plc.token);
+        console.log(result);
+        if(result===200){
+            channel.status=false;
+            await Channel.findByIdAndUpdate(alert.idChannel, channel)
+        }
     }
 
 }
