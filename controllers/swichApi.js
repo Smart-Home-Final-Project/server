@@ -4,6 +4,8 @@ const { isObjectIdOrHexString } = require('mongoose');
 const mongoose = require("mongoose");
 
 const turnOffrequest  = async(channel,login,token)=>{
+    console.log(channel,login,token);
+    console.log("channel","login","token");
     var requestOptions = {
         method: 'GET',
         redirect: 'follow'

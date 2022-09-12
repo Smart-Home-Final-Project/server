@@ -120,17 +120,14 @@ const fetchSwitchOn = async (alert) => {
 
 const fetchSwitchOff = async (alert) => {
     console.log('switch off!!!!!!!!!!!!!!!!!!!!')
-    var requestOptions = {
-        method: 'POST',
-        redirect: 'follow'
-    };
     let channel;
     let plc;
     console.log(alert);
-    if (alert.channelId) {
+    if (alert.idChannel) {
 
-        channel = await fetchChannel(alert.channelId)
-        plc = await fetchPlc(alert.userId)
+        channel = await Channel.findById(alert.idChannel.toString())
+        plcs = await Plc.find({ userId: mongoose.Types.ObjectId('62d6bd907546aad8a5a93048') })//alert.userId
+        plc = plcs[0]
         let result = await turnOffrequest(channel.channelNum, plc.login, plc.token);
         console.log(result);
         if(result===200){
