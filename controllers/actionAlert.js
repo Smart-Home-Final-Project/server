@@ -18,6 +18,7 @@ const updateActionAlert = async (req, res) => {
     const alert = req.body;
     try {
         let a = await ActionAlert.findByIdAndUpdate(id, alert)
+        a = await ActionAlert.findById(id);
         return res.send(a)
     }
     catch (error) {
